@@ -37,15 +37,15 @@ services:
       # Database
       DATABASE_URL: ${DATABASE_URL:-postgresql://medusa:medusa@db:5432/medusa}
       # CORS
-      STORE_CORS: ${STORE_CORS:-http://localhost:3000}
-      ADMIN_CORS: ${ADMIN_CORS:-http://localhost:7001}
-      AUTH_CORS: ${AUTH_CORS:-http://localhost:3000}
+      STORE_CORS: ${STORE_CORS:-http://localhost:8000}
+      ADMIN_CORS: ${ADMIN_CORS:-http://localhost:9000}
+      AUTH_CORS: ${AUTH_CORS:-http://localhost:9000}
       # Secrets
       JWT_SECRET: ${JWT_SECRET:-supersecret}
       COOKIE_SECRET: ${COOKIE_SECRET:-supersecret}
       # Optional Redis (used by Medusa for cache/queues)
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      NODE_ENV: production
+      NODE_ENV: development
     depends_on:
       db:
         condition: service_healthy

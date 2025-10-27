@@ -3,13 +3,13 @@
 FROM node:20-alpine AS base
 
 # Set working directory
-WORKDIR /app
+WORKDIR /server
 
 # Install dependencies (use yarn)
 RUN corepack enable
 
 # Copy package files
-COPY package.json yarn.lock ./
+COPY package.json yarn.lock .yarnrc.yml ./
 
 # Install deps
 RUN yarn install --frozen-lockfile
@@ -17,23 +17,33 @@ RUN yarn install --frozen-lockfile
 # Copy the rest of the source code
 COPY . .
 
-# Build Medusa project
-RUN yarn build
+# Give execute permissions to the startup script
+COPY start.sh ./start.sh
+RUN chmod +x ./start.sh
 
-# Production image
-FROM node:20-alpine AS runner
-WORKDIR /app
-ENV NODE_ENV=production
+# Start with migrations and then the development server
+CMD ["./start.sh"]
 
-# Copy node_modules and build artifacts from builder
-COPY --from=base /app/node_modules ./node_modules
-# Medusa build outputs to .medusa/server per tsconfig.json
-COPY --from=base /app/.medusa/server ./.medusa/server
-COPY package.json ./package.json
-COPY medusa-config.ts ./medusa-config.ts
+# # Production image
+# FROM node:20-alpine AS runner
+# WORKDIR /server
+# ENV NODE_ENV=production
+# RUN corepack enable
 
-# Expose Medusa default port
-EXPOSE 9000
+# # Copy node_modules and build artifacts from builder
+# COPY --from=base /server/node_modules ./node_modules
+# # Medusa build outputs to .medusa (includes server + admin build)
+# COPY --from=base /server/.medusa ./.medusa
+# COPY --from=base /server/package.json ./package.json
+# COPY --from=base /server/medusa-config.ts ./medusa-config.ts
+# COPY --from=base /server/tsconfig.json ./tsconfig.json
 
-# Start Medusa server
-CMD ["yarn", "start"]
+# # Copy the startup script and make it executable
+# COPY start.sh ./start.sh
+# RUN chmod +x ./start.sh
+
+# # Expose Medusa default port
+# EXPOSE 9000
+
+# # Start Medusa server
+# CMD ["./start.sh"]
