@@ -7,11 +7,13 @@ import Divider from "@modules/common/components/divider"
 import DiscountCode from "@modules/checkout/components/discount-code"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { HttpTypes } from "@medusajs/types"
+import { CATALOG_TRANSLATIONS, getLocaleFromCountry } from "@lib/i18n"
 
 type SummaryProps = {
   cart: HttpTypes.StoreCart & {
     promotions: HttpTypes.StorePromotion[]
   }
+  countryCode: string
 }
 
 function getCheckoutStep(cart: HttpTypes.StoreCart) {
@@ -24,22 +26,23 @@ function getCheckoutStep(cart: HttpTypes.StoreCart) {
   }
 }
 
-const Summary = ({ cart }: SummaryProps) => {
+const Summary = ({ cart, countryCode }: SummaryProps) => {
   const step = getCheckoutStep(cart)
-
+  const locale = getLocaleFromCountry(countryCode)
+  const copy = CATALOG_TRANSLATIONS[locale]
   return (
     <div className="flex flex-col gap-y-4">
       <Heading level="h2" className="text-[2rem] leading-[2.75rem]">
-        Summary
+        {copy.summary}
       </Heading>
-      <DiscountCode cart={cart} />
+      <DiscountCode cart={cart} countryCode={countryCode} />
       <Divider />
-      <CartTotals totals={cart} />
+      <CartTotals totals={cart} countryCode={countryCode} />
       <LocalizedClientLink
         href={"/checkout?step=" + step}
         data-testid="checkout-button"
       >
-        <Button className="w-full h-10">Go to checkout</Button>
+        <Button className="w-full h-10">{copy.goToCheckout}</Button>
       </LocalizedClientLink>
     </div>
   )

@@ -10,6 +10,7 @@ import SkeletonRelatedProducts from "@modules/skeletons/templates/skeleton-relat
 import { notFound } from "next/navigation"
 import ProductActionsWrapper from "./product-actions-wrapper"
 import { HttpTypes } from "@medusajs/types"
+import { getLocaleFromCountry } from "@lib/i18n"
 
 type ProductTemplateProps = {
   product: HttpTypes.StoreProduct
@@ -25,7 +26,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   if (!product || !product.id) {
     return notFound()
   }
-
+  const locale = getLocaleFromCountry(countryCode)
   return (
     <>
       <div
@@ -33,8 +34,8 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
         data-testid="product-container"
       >
         <div className="flex flex-col small:sticky small:top-48 small:py-0 small:max-w-[300px] w-full py-8 gap-y-6">
-          <ProductInfo product={product} />
-          <ProductTabs product={product} />
+          <ProductInfo product={product} countryCode={countryCode} />
+          <ProductTabs product={product} locale={locale} />
         </div>
         <div className="block w-full relative">
           <ImageGallery images={product?.images || []} />

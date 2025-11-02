@@ -2,10 +2,21 @@ import { Metadata } from "next"
 
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
 import StoreTemplate from "@modules/store/templates"
+import { CATALOG_TRANSLATIONS, getLocaleFromCountry } from "@lib/i18n"
 
-export const metadata: Metadata = {
-  title: "Store",
-  description: "Explore all of our products.",
+export async function generateMetadata(props: {
+  params: Promise<{
+    countryCode: string
+  }>
+}): Promise<Metadata> {
+  const { countryCode } = await props.params
+  const locale = getLocaleFromCountry(countryCode)
+  const copy = CATALOG_TRANSLATIONS[locale]
+  
+  return {
+    title: copy.heading,
+    description: copy.subheading,
+  }
 }
 
 type Params = {

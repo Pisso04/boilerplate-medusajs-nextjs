@@ -1,12 +1,22 @@
+import { getLocaleFromCountry } from "@lib/i18n"
 import { HttpTypes } from "@medusajs/types"
 import { Heading, Text } from "@medusajs/ui"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
+import { DroneFromProduct } from "types/drone-from-product"
 
 type ProductInfoProps = {
-  product: HttpTypes.StoreProduct
+  product: DroneFromProduct
+  countryCode?: string
 }
 
-const ProductInfo = ({ product }: ProductInfoProps) => {
+const ProductInfo = ({ product, countryCode }: ProductInfoProps) => {
+  const locale = getLocaleFromCountry(countryCode || "us");
+  
+  const productInfos =
+    locale === "en"
+      ? (product.drone?.translations as Record<string, any> | undefined)?.["en"]
+      : (product.drone?.translations as Record<string, any> | undefined)?.["fr"]
+
   return (
     <div id="product-info">
       <div className="flex flex-col gap-y-4 lg:max-w-[500px] mx-auto">
@@ -30,7 +40,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           className="text-medium text-ui-fg-subtle whitespace-pre-line"
           data-testid="product-description"
         >
-          {product.description}
+          {productInfos.description}
         </Text>
       </div>
     </div>

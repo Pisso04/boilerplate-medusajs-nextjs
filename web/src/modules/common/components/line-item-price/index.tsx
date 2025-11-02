@@ -1,3 +1,4 @@
+import { CATALOG_TRANSLATIONS, getLocaleFromCountry } from "@lib/i18n"
 import { getPercentageDiff } from "@lib/util/get-precentage-diff"
 import { convertToLocale } from "@lib/util/money"
 import { HttpTypes } from "@medusajs/types"
@@ -7,22 +8,33 @@ type LineItemPriceProps = {
   item: HttpTypes.StoreCartLineItem | HttpTypes.StoreOrderLineItem
   style?: "default" | "tight"
   currencyCode: string
+  countryCode: string
 }
 
 const LineItemPrice = ({
   item,
   style = "default",
   currencyCode,
+  countryCode,
 }: LineItemPriceProps) => {
   const { total, original_total } = item
   const originalPrice = original_total
   const currentPrice = total
   const hasReducedPrice = currentPrice < originalPrice
 
+  const locale = getLocaleFromCountry(countryCode);
+  const copy = CATALOG_TRANSLATIONS[locale];
+
+  const rentalMetadata = item.metadata as Record<string, any> | undefined
+  const rentalMetadataExist =
+    rentalMetadata &&
+    rentalMetadata.rental_summary ? true : false;
+  const rentalTotal = currencyCode === "eur" ?  rentalMetadata!["rental_eur_price"] * rentalMetadata!["rental_duration_days"] * item.quantity : rentalMetadata!["rental_usd_price"] * rentalMetadata!["rental_duration_days"] * item.quantity;
+
   return (
     <div className="flex flex-col gap-x-2 text-ui-fg-subtle items-end">
       <div className="text-left">
-        {hasReducedPrice && (
+        {hasReducedPrice && !rentalMetadataExist && (
           <>
             <p>
               {style === "default" && (
@@ -52,9 +64,10 @@ const LineItemPrice = ({
           data-testid="product-price"
         >
           {convertToLocale({
-            amount: currentPrice,
+            amount: !rentalMetadataExist ? currentPrice : rentalTotal,
             currency_code: currencyCode,
           })}
+          {rentalMetadataExist && <span className="text-ui-fg-subtle"> - {rentalMetadata!["rental_duration_days"]} {copy.days }</span>}
         </span>
       </div>
     </div>

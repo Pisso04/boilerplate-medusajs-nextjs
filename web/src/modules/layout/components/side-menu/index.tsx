@@ -3,21 +3,38 @@
 import { Popover, PopoverPanel, Transition } from "@headlessui/react"
 import { ArrowRightMini, XMark } from "@medusajs/icons"
 import { Text, clx, useToggleState } from "@medusajs/ui"
-import { Fragment } from "react"
+import { Fragment, useMemo } from "react"
 
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import CountrySelect from "../country-select"
+import LanguageSwitcher from "../language-switcher"
 import { HttpTypes } from "@medusajs/types"
+import { useParams } from "next/navigation"
+import { getLocaleFromCountry } from "@lib/i18n"
 
-const SideMenuItems = {
+const SideMenuItemsEN = {
   Home: "/",
   Store: "/store",
   Account: "/account",
   Cart: "/cart",
 }
 
+const SideMenuItemsFR = {
+  Accueil: "/",
+  Boutique: "/store",
+  Compte: "/account",
+  Panier: "/cart"
+}
+
 const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
   const toggleState = useToggleState()
+
+  const { countryCode } = useParams();
+  
+  const currentLocale = useMemo(
+    () => getLocaleFromCountry(countryCode as string | undefined),
+    [countryCode]
+  )
 
   return (
     <div className="h-full">
@@ -54,23 +71,43 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
                         <XMark />
                       </button>
                     </div>
-                    <ul className="flex flex-col gap-6 items-start justify-start">
-                      {Object.entries(SideMenuItems).map(([name, href]) => {
-                        return (
-                          <li key={name}>
-                            <LocalizedClientLink
-                              href={href}
-                              className="text-3xl leading-10 hover:text-ui-fg-disabled"
-                              onClick={close}
-                              data-testid={`${name.toLowerCase()}-link`}
-                            >
-                              {name}
-                            </LocalizedClientLink>
-                          </li>
-                        )
-                      })}
-                    </ul>
+                    {currentLocale == "en" ? (
+                      <ul className="flex flex-col gap-6 items-start justify-start">
+                        {Object.entries(SideMenuItemsEN).map(([name, href]) => {
+                          return (
+                            <li key={name}>
+                              <LocalizedClientLink
+                                href={href}
+                                className="text-3xl leading-10 hover:text-ui-fg-disabled"
+                                onClick={close}
+                                data-testid={`${name.toLowerCase()}-link`}
+                              >
+                                {name}
+                              </LocalizedClientLink>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    ) : (
+                      <ul className="flex flex-col gap-6 items-start justify-start">
+                        {Object.entries(SideMenuItemsFR).map(([name, href]) => {
+                          return (
+                            <li key={name}>
+                              <LocalizedClientLink
+                                href={href}
+                                className="text-3xl leading-10 hover:text-ui-fg-disabled"
+                                onClick={close}
+                                data-testid={`${name.toLowerCase()}-link`}
+                              >
+                                {name}
+                              </LocalizedClientLink>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )}
                     <div className="flex flex-col gap-y-6">
+                      <LanguageSwitcher />
                       <div
                         className="flex justify-between"
                         onMouseEnter={toggleState.open}
@@ -90,7 +127,7 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
                         />
                       </div>
                       <Text className="flex justify-between txt-compact-small">
-                        © {new Date().getFullYear()} Medusa Store. All rights
+                        © {new Date().getFullYear()} Drone Hub. All rights
                         reserved.
                       </Text>
                     </div>

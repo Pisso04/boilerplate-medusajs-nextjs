@@ -5,9 +5,13 @@ import { StoreRegion } from "@medusajs/types"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import CartButton from "@modules/layout/components/cart-button"
 import SideMenu from "@modules/layout/components/side-menu"
+import LanguageSwitcher from "@modules/layout/components/language-switcher"
+import { CATALOG_TRANSLATIONS, getLocaleFromCountry } from "@lib/i18n"
 
-export default async function Nav() {
+export default async function Nav({ countryCode }: { countryCode?: string }) {
   const regions = await listRegions().then((regions: StoreRegion[]) => regions)
+  const locale = getLocaleFromCountry(countryCode)
+  const copy = CATALOG_TRANSLATIONS[locale]
 
   return (
     <div className="sticky top-0 inset-x-0 z-50 group">
@@ -25,18 +29,19 @@ export default async function Nav() {
               className="txt-compact-xlarge-plus hover:text-ui-fg-base uppercase"
               data-testid="nav-store-link"
             >
-              Medusa Store
+              Drone Hub
             </LocalizedClientLink>
           </div>
 
           <div className="flex items-center gap-x-6 h-full flex-1 basis-0 justify-end">
+            <LanguageSwitcher />
             <div className="hidden small:flex items-center gap-x-6 h-full">
               <LocalizedClientLink
                 className="hover:text-ui-fg-base"
                 href="/account"
                 data-testid="nav-account-link"
               >
-                Account
+                {copy.account}
               </LocalizedClientLink>
             </div>
             <Suspense
@@ -46,11 +51,11 @@ export default async function Nav() {
                   href="/cart"
                   data-testid="nav-cart-link"
                 >
-                  Cart (0)
+                  {copy.cart} (0)
                 </LocalizedClientLink>
               }
             >
-              <CartButton />
+              <CartButton countryCode={countryCode}/>
             </Suspense>
           </div>
         </nav>

@@ -6,6 +6,7 @@ import {
   PopoverPanel,
   Transition,
 } from "@headlessui/react"
+import { CATALOG_TRANSLATIONS, getLocaleFromCountry, SupportedLocale } from "@lib/i18n"
 import { convertToLocale } from "@lib/util/money"
 import { HttpTypes } from "@medusajs/types"
 import { Button } from "@medusajs/ui"
@@ -19,13 +20,18 @@ import { Fragment, useEffect, useRef, useState } from "react"
 
 const CartDropdown = ({
   cart: cartState,
+  countryCode,
 }: {
   cart?: HttpTypes.StoreCart | null
+  countryCode: string | undefined
 }) => {
   const [activeTimer, setActiveTimer] = useState<NodeJS.Timer | undefined>(
     undefined
   )
   const [cartDropdownOpen, setCartDropdownOpen] = useState(false)
+
+  const locale = getLocaleFromCountry(countryCode);
+  const copy = CATALOG_TRANSLATIONS[locale]
 
   const open = () => setCartDropdownOpen(true)
   const close = () => setCartDropdownOpen(false)
@@ -35,7 +41,33 @@ const CartDropdown = ({
       return acc + item.quantity
     }, 0) || 0
 
-  const subtotal = cartState?.subtotal ?? 0
+  
+  function calculateSubTotal() {
+    let subtotal = 0
+    for (const item of cartState?.items || []) {
+      const rentalMetadata = item.metadata as Record<string, any> | undefined
+      const isRental =
+        rentalMetadata && rentalMetadata.rental_summary ? true : false
+      if (isRental) {
+        const rentalTotal =
+          locale === "fr"
+            ? rentalMetadata!["rental_eur_price"] *
+              rentalMetadata!["rental_duration_days"] *
+              item.quantity
+            : rentalMetadata!["rental_usd_price"] *
+              rentalMetadata!["rental_duration_days"] *
+              item.quantity
+        subtotal += rentalTotal
+      } else {
+        subtotal += item.subtotal
+      }
+    }
+    return subtotal
+  }
+
+  const cartSubtotal = calculateSubTotal()
+
+  //const subtotal = cartState?.subtotal ?? 0
   const itemRef = useRef<number>(totalItems || 0)
 
   const timedOpen = () => {
@@ -85,7 +117,7 @@ const CartDropdown = ({
             className="hover:text-ui-fg-base"
             href="/cart"
             data-testid="nav-cart-link"
-          >{`Cart (${totalItems})`}</LocalizedClientLink>
+          >{`${copy.cart} (${totalItems})`}</LocalizedClientLink>
         </PopoverButton>
         <Transition
           show={cartDropdownOpen}
@@ -103,7 +135,7 @@ const CartDropdown = ({
             data-testid="nav-cart-dropdown"
           >
             <div className="p-4 flex items-center justify-center">
-              <h3 className="text-large-semi">Cart</h3>
+              <h3 className="text-large-semi">{copy.cart}</h3>
             </div>
             {cartState && cartState.items?.length ? (
               <>
@@ -151,7 +183,7 @@ const CartDropdown = ({
                                   data-testid="cart-item-quantity"
                                   data-value={item.quantity}
                                 >
-                                  Quantity: {item.quantity}
+                                  {copy.quantity}: {item.quantity}
                                 </span>
                               </div>
                               <div className="flex justify-end">
@@ -159,6 +191,7 @@ const CartDropdown = ({
                                   item={item}
                                   style="tight"
                                   currencyCode={cartState.currency_code}
+                                  countryCode={countryCode as string}
                                 />
                               </div>
                             </div>
@@ -168,7 +201,7 @@ const CartDropdown = ({
                             className="mt-1"
                             data-testid="cart-item-remove-button"
                           >
-                            Remove
+                            {copy.remove}
                           </DeleteButton>
                         </div>
                       </div>
@@ -177,16 +210,15 @@ const CartDropdown = ({
                 <div className="p-4 flex flex-col gap-y-4 text-small-regular">
                   <div className="flex items-center justify-between">
                     <span className="text-ui-fg-base font-semibold">
-                      Subtotal{" "}
-                      <span className="font-normal">(excl. taxes)</span>
+                      {copy.subTotal}{" "}
                     </span>
                     <span
                       className="text-large-semi"
                       data-testid="cart-subtotal"
-                      data-value={subtotal}
+                      data-value={cartSubtotal}
                     >
                       {convertToLocale({
-                        amount: subtotal,
+                        amount: cartSubtotal,
                         currency_code: cartState.currency_code,
                       })}
                     </span>
@@ -197,7 +229,7 @@ const CartDropdown = ({
                       size="large"
                       data-testid="go-to-cart-button"
                     >
-                      Go to cart
+                      {copy.goToCart}
                     </Button>
                   </LocalizedClientLink>
                 </div>
@@ -208,12 +240,12 @@ const CartDropdown = ({
                   <div className="bg-gray-900 text-small-regular flex items-center justify-center w-6 h-6 rounded-full text-white">
                     <span>0</span>
                   </div>
-                  <span>Your shopping bag is empty.</span>
+                  <span>{copy.bagEmpty}</span>
                   <div>
                     <LocalizedClientLink href="/store">
                       <>
-                        <span className="sr-only">Go to all products page</span>
-                        <Button onClick={close}>Explore products</Button>
+                        <span className="sr-only">copy.goToProducts</span>
+                        <Button onClick={close}>{copy.exploreProducts}</Button>
                       </>
                     </LocalizedClientLink>
                   </div>
