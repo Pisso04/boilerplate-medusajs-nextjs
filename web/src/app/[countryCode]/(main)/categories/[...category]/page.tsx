@@ -16,36 +16,61 @@ type Props = {
 }
 
 export async function generateStaticParams() {
-  const product_categories = await listCategories()
+  try {
+    const productCategories = await listCategories()
 
-  if (!product_categories) {
-    return []
-  }
+    if (!productCategories.length) {
+      return []
+    }
 
-  const countryCodes = await listRegions().then((regions: StoreRegion[]) =>
-    regions?.map((r) => r.countries?.map((c) => c.iso_2)).flat()
-  )
+    const regions = await listRegions()
 
-  const categoryHandles = product_categories.map(
-    (category: any) => category.handle
-  )
+    const countryCodes = regions
+      ?.map((region: StoreRegion) =>
+        region.countries?.map((country) => country.iso_2)
+      )
+      .flat()
+      .filter((code): code is string => Boolean(code))
 
-  const staticParams = countryCodes
-    ?.map((countryCode: string | undefined) =>
-      categoryHandles.map((handle: any) => ({
+    if (!countryCodes?.length) {
+      return []
+    }
+
+    const handles = productCategories
+      .map((category: any) => category.handle)
+      .filter((handle): handle is string => Boolean(handle))
+
+    if (!handles.length) {
+      return []
+    }
+
+    return countryCodes.flatMap((countryCode) =>
+      handles.map((handle) => ({
         countryCode,
         category: [handle],
       }))
     )
-    .flat()
+  } catch (error) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        `[categories] Skipping static params: ${
+          error instanceof Error ? error.message : "unknown error"
+        }.`
+      )
+    }
 
-  return staticParams
+    return []
+  }
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const params = await props.params
   try {
     const productCategory = await getCategoryByHandle(params.category)
+
+    if (!productCategory) {
+      notFound()
+    }
 
     const title = productCategory.name + " | Drone Hub"
 

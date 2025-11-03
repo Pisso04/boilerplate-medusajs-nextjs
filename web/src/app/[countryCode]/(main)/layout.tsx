@@ -18,8 +18,10 @@ export default async function PageLayout({
   params,
 }: {
   children: React.ReactNode
-  params: { countryCode: string }
+  params: { countryCode: string } | Promise<{ countryCode: string }>
 }) {
+  const { countryCode } = (await params) as { countryCode: string }
+
   const customer = await retrieveCustomer()
   const cart = await retrieveCart()
   let shippingOptions: StoreCartShippingOption[] = []
@@ -32,7 +34,7 @@ export default async function PageLayout({
 
   return (
     <>
-      <Nav countryCode={params.countryCode} />
+      <Nav countryCode={countryCode} />
       {customer && cart && (
         <CartMismatchBanner customer={customer} cart={cart} />
       )}

@@ -18,36 +18,53 @@ type Props = {
 export const PRODUCT_LIMIT = 12
 
 export async function generateStaticParams() {
-  const { collections } = await listCollections({
-    fields: "*products",
-  })
+  try {
+    const { collections } = await listCollections({
+      fields: "*products",
+    })
 
-  if (!collections) {
-    return []
-  }
+    if (!collections.length) {
+      return []
+    }
 
-  const countryCodes = await listRegions().then(
-    (regions: StoreRegion[]) =>
-      regions
-        ?.map((r) => r.countries?.map((c) => c.iso_2))
-        .flat()
-        .filter(Boolean) as string[]
-  )
+    const regions = await listRegions()
 
-  const collectionHandles = collections.map(
-    (collection: StoreCollection) => collection.handle
-  )
+    const countryCodes = regions
+      ?.map((region: StoreRegion) =>
+        region.countries?.map((country) => country.iso_2)
+      )
+      .flat()
+      .filter((code): code is string => Boolean(code))
 
-  const staticParams = countryCodes
-    ?.map((countryCode: string) =>
-      collectionHandles.map((handle: string | undefined) => ({
+    if (!countryCodes?.length) {
+      return []
+    }
+
+    const handles = collections
+      .map((collection: StoreCollection) => collection.handle)
+      .filter((handle): handle is string => Boolean(handle))
+
+    if (!handles.length) {
+      return []
+    }
+
+    return countryCodes.flatMap((countryCode) =>
+      handles.map((handle) => ({
         countryCode,
         handle,
       }))
     )
-    .flat()
+  } catch (error) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        `[collections] Skipping static params: ${
+          error instanceof Error ? error.message : "unknown error"
+        }.`
+      )
+    }
 
-  return staticParams
+    return []
+  }
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
@@ -71,9 +88,7 @@ export default async function CollectionPage(props: Props) {
   const params = await props.params
   const { sortBy, page } = searchParams
 
-  const collection = await getCollectionByHandle(params.handle).then(
-    (collection: StoreCollection) => collection
-  )
+  const collection = await getCollectionByHandle(params.handle)
 
   if (!collection) {
     notFound()

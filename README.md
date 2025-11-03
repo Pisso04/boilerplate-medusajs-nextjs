@@ -68,17 +68,9 @@ docker compose logs -f
 - Postgres: localhost:5432 (inside Docker network: `db:5432`)
 - Redis: localhost:6379 (inside Docker network: `redis:6379`)
 
-## 4) Seed sample data (optional)
+## 4) Seed sample data
 
-You can run the Medusa seed script inside the API container:
-
-```bash
-# once containers are running
-# use the compiled seed script inside the container
-docker compose exec medusa sh -lc "node dist/scripts/seed.js"
-```
-
-This uses the script defined in `medusa/package.json` and `src/scripts/seed.ts`.
+Drone extension is added and data is automatically seed when medusa starts.
 
 ## 5) Stopping and cleaning up
 
@@ -109,6 +101,13 @@ docker compose down -v
   - Postgres: `5432:5432`
   - Redis: `6379:6379`
 - Change any values in `.env` and re-run `docker compose up -d`.
+- Get NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY from settingd medusa admin panel (localhost:9000)
+- To add admin user run(define your own email and password) :
+
+```bash
+docker compose run --rm medusa npx medusa user -e admin@gmail.com -p admin1234
+```
+
 
 ## Troubleshooting
 
