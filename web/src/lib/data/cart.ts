@@ -115,10 +115,12 @@ export async function addToCart({
   variantId,
   quantity,
   countryCode,
+  metadata,
 }: {
   variantId: string
   quantity: number
   countryCode: string
+  metadata?: Record<string, unknown>
 }) {
   if (!variantId) {
     throw new Error("Missing variant ID when adding to cart")
@@ -134,13 +136,23 @@ export async function addToCart({
     ...(await getAuthHeaders()),
   }
 
+  const lineItemBody: {
+    variant_id: string
+    quantity: number
+    metadata?: Record<string, unknown>
+  } = {
+    variant_id: variantId,
+    quantity,
+  }
+
+  if (metadata && Object.keys(metadata).length > 0) {
+    lineItemBody.metadata = metadata
+  }
+
   await sdk.store.cart
     .createLineItem(
       cart.id,
-      {
-        variant_id: variantId,
-        quantity,
-      },
+      lineItemBody,
       {},
       headers
     )

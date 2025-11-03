@@ -10,6 +10,7 @@ import { getProductPrice } from "@lib/util/get-product-price"
 import OptionSelect from "./option-select"
 import { HttpTypes } from "@medusajs/types"
 import { isSimpleProduct } from "@lib/util/product"
+import { CATALOG_TRANSLATIONS, SupportedLocale } from "@lib/i18n"
 
 type MobileActionsProps = {
   product: HttpTypes.StoreProduct
@@ -21,6 +22,10 @@ type MobileActionsProps = {
   isAdding?: boolean
   show: boolean
   optionsDisabled: boolean
+  isRental: boolean
+  onShowRentalForm: () => void
+  rentalButtonDisabled: boolean
+  locale: SupportedLocale
 }
 
 const MobileActions: React.FC<MobileActionsProps> = ({
@@ -33,8 +38,14 @@ const MobileActions: React.FC<MobileActionsProps> = ({
   isAdding,
   show,
   optionsDisabled,
+  isRental,
+  onShowRentalForm,
+  rentalButtonDisabled,
+  locale,
 }) => {
   const { state, open, close } = useToggleState()
+
+  const copy = CATALOG_TRANSLATIONS[locale]
 
   const price = getProductPrice({
     product: product,
@@ -126,10 +137,20 @@ const MobileActions: React.FC<MobileActionsProps> = ({
                 {!variant
                   ? "Select variant"
                   : !inStock
-                  ? "Out of stock"
-                  : "Add to cart"}
+                  ? copy.outOfStock
+                  : copy.addToCart}
               </Button>
             </div>
+            {isRental && (
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={onShowRentalForm}
+                disabled={rentalButtonDisabled}
+              >
+                {copy.startRental}
+              </Button>
+            )}
           </div>
         </Transition>
       </div>

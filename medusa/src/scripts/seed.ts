@@ -16,6 +16,7 @@ import {
   createStockLocationsWorkflow,
   createTaxRegionsWorkflow,
   linkSalesChannelsToApiKeyWorkflow,
+  linkSalesChannelsToStockLocationWorkflow,
   updateStoresWorkflow,
 } from "@medusajs/medusa/core-flows";
 import { createDroneFromProductWorkflow } from "../workflows/create_drone_from_product";
@@ -144,8 +145,8 @@ export default async function seedMultiCurrencyStore({ container }: ExecArgs) {
           {
             name: "European Warehouse",
             address: {
-              city: "Copenhagen",
-              country_code: "DK",
+              city: "france",
+              country_code: "fr",
               address_1: "",
             },
           },
@@ -153,6 +154,13 @@ export default async function seedMultiCurrencyStore({ container }: ExecArgs) {
       },
     });
     stockLocation = result[0];
+
+    await linkSalesChannelsToStockLocationWorkflow(container).run({
+      input: {
+        id: stockLocation.id,
+        add: [defaultSalesChannel[0].id],
+      },
+    });
   } else {
     logger.info("Stock location already exists, skipping.");
   }
@@ -333,7 +341,7 @@ export default async function seedMultiCurrencyStore({ container }: ExecArgs) {
     logger.info("✅ Shipping options already exist, skipping.");
   }
 
-  // 7️⃣ --- API KEY ---
+  //-- API KEY ---
   const existingApiKeys = await apiKeyService.listApiKeys({
     title: "Drone hub Publishable Key",
   });
@@ -359,7 +367,7 @@ export default async function seedMultiCurrencyStore({ container }: ExecArgs) {
     logger.info("✅ Publishable API key already exists, skipping.");
   }
 
-  // 8️⃣ --- CATEGORY ---
+  // --- CATEGORY ---
   const categories = await productModuleService.listProductCategories({
     name: "Drones",
   });
@@ -372,7 +380,7 @@ export default async function seedMultiCurrencyStore({ container }: ExecArgs) {
     droneCategory = result[0];
   }
 
-  // 9️⃣ --- PRODUCTS ---
+  // --- PRODUCTS ---
   const products = await productModuleService.listProducts();
   if (products.length === 0) {
     logger.info("Creating products...");
@@ -575,7 +583,7 @@ export default async function seedMultiCurrencyStore({ container }: ExecArgs) {
     logger.info("✅ Products already exist, skipping.");
   }
 
-  // 🔟 --- INVENTORY ---
+  // --- INVENTORY ---
   logger.info("Setting inventory...");
 
   const { data: inventoryItems } = await query.graph({

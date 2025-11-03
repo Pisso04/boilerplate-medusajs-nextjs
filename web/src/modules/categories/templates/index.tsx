@@ -8,6 +8,7 @@ import { SortOptions } from "@modules/store/components/refinement-list/sort-prod
 import PaginatedProducts from "@modules/store/templates/paginated-products"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { HttpTypes } from "@medusajs/types"
+import { CATALOG_TRANSLATIONS, getLocaleFromCountry } from "@lib/i18n"
 
 export default function CategoryTemplate({
   category,
@@ -22,6 +23,8 @@ export default function CategoryTemplate({
 }) {
   const pageNumber = page ? parseInt(page) : 1
   const sort = sortBy || "created_at"
+  const locale = getLocaleFromCountry(countryCode)
+  const copy = CATALOG_TRANSLATIONS[locale]
 
   if (!category || !countryCode) notFound()
 
@@ -41,7 +44,17 @@ export default function CategoryTemplate({
       className="flex flex-col small:flex-row small:items-start py-6 content-container"
       data-testid="category-container"
     >
-      <RefinementList sortBy={sort} data-testid="sort-by-container" />
+      <RefinementList
+        sortBy={sort}
+        data-testid="sort-by-container"
+        labels={{
+          title: copy.sortBy,
+          options: copy.sortOptions.map((option) => ({
+            value: option.value,
+            label: option.label,
+          })),
+        }}
+      />
       <div className="w-full">
         <div className="flex flex-row mb-8 text-2xl-semi gap-4">
           {parents &&
@@ -89,6 +102,9 @@ export default function CategoryTemplate({
             page={pageNumber}
             categoryId={category.id}
             countryCode={countryCode}
+            locale={locale}
+            viewDetailsLabel={copy.viewDetails}
+            emptyState={copy.emptyState}
           />
         </Suspense>
       </div>

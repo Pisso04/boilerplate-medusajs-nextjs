@@ -1,23 +1,39 @@
 "use server"
 
 import { sdk } from "@lib/config"
+import { isConnectionError } from "@lib/util/is-connection-error"
 import { HttpTypes } from "@medusajs/types"
 import { getCacheOptions } from "./cookies"
 
-export const retrieveCollection = async (id: string) => {
+export const retrieveCollection = async (
+  id: string
+): Promise<HttpTypes.StoreCollection | null> => {
   const next = {
     ...(await getCacheOptions("collections")),
   }
 
-  return sdk.client
-    .fetch<{ collection: HttpTypes.StoreCollection }>(
-      `/store/collections/${id}`,
-      {
-        next,
-        cache: "force-cache",
-      }
-    )
-    .then(({ collection }) => collection)
+  try {
+    const { collection } = await sdk.client.fetch<{
+      collection: HttpTypes.StoreCollection
+    }>(`/store/collections/${id}`, {
+      next,
+      cache: "force-cache",
+    })
+
+    return collection
+  } catch (error) {
+    if (!isConnectionError(error)) {
+      throw error
+    }
+
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        `[data/collections] Failed to retrieve collection ${id}: fetch failed.`
+      )
+    }
+
+    return null
+  }
 }
 
 export const listCollections = async (
@@ -30,30 +46,62 @@ export const listCollections = async (
   queryParams.limit = queryParams.limit || "100"
   queryParams.offset = queryParams.offset || "0"
 
-  return sdk.client
-    .fetch<{ collections: HttpTypes.StoreCollection[]; count: number }>(
-      "/store/collections",
-      {
-        query: queryParams,
-        next,
-        cache: "force-cache",
-      }
-    )
-    .then(({ collections }) => ({ collections, count: collections.length }))
+  try {
+    const { collections } = await sdk.client.fetch<{
+      collections: HttpTypes.StoreCollection[]
+      count: number
+    }>("/store/collections", {
+      query: queryParams,
+      next,
+      cache: "force-cache",
+    })
+
+    return { collections, count: collections.length }
+  } catch (error) {
+    if (!isConnectionError(error)) {
+      throw error
+    }
+
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        `[data/collections] Failed to list collections: fetch failed. Returning empty list.`
+      )
+    }
+
+    return { collections: [], count: 0 }
+  }
 }
 
 export const getCollectionByHandle = async (
   handle: string
-): Promise<HttpTypes.StoreCollection> => {
+): Promise<HttpTypes.StoreCollection | undefined> => {
   const next = {
     ...(await getCacheOptions("collections")),
   }
 
-  return sdk.client
-    .fetch<HttpTypes.StoreCollectionListResponse>(`/store/collections`, {
-      query: { handle, fields: "*products" },
-      next,
-      cache: "force-cache",
-    })
-    .then(({ collections }) => collections[0])
+  try {
+    const { collections } =
+      await sdk.client.fetch<HttpTypes.StoreCollectionListResponse>(
+        `/store/collections`,
+        {
+          query: { handle, fields: "*products" },
+          next,
+          cache: "force-cache",
+        }
+      )
+
+    return collections[0]
+  } catch (error) {
+    if (!isConnectionError(error)) {
+      throw error
+    }
+
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        `[data/collections] Failed to fetch collection with handle "${handle}": fetch failed.`
+      )
+    }
+
+    return undefined
+  }
 }

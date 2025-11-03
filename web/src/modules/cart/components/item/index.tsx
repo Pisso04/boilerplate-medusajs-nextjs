@@ -13,16 +13,20 @@ import LocalizedClientLink from "@modules/common/components/localized-client-lin
 import Spinner from "@modules/common/icons/spinner"
 import Thumbnail from "@modules/products/components/thumbnail"
 import { useState } from "react"
+import { SupportedLocale } from "@lib/i18n"
 
 type ItemProps = {
   item: HttpTypes.StoreCartLineItem
   type?: "full" | "preview"
   currencyCode: string
+  countryCode: string
 }
 
-const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
+const Item = ({ item, type = "full", currencyCode, countryCode }: ItemProps) => {
   const [updating, setUpdating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const rentalMetadata = item.metadata as Record<string, any> | undefined
+  const rentalMetadataExist = rentalMetadata && rentalMetadata.rental_start_date && rentalMetadata.rental_end_date && rentalMetadata.rentalSummary;
 
   const changeQuantity = async (quantity: number) => {
     setError(null)
@@ -110,6 +114,7 @@ const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
             item={item}
             style="tight"
             currencyCode={currencyCode}
+            countryCode={countryCode}
           />
         </Table.Cell>
       )}
@@ -127,6 +132,7 @@ const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
                 item={item}
                 style="tight"
                 currencyCode={currencyCode}
+                countryCode={countryCode}
               />
             </span>
           )}
@@ -134,6 +140,7 @@ const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
             item={item}
             style="tight"
             currencyCode={currencyCode}
+            countryCode={countryCode}
           />
         </span>
       </Table.Cell>
